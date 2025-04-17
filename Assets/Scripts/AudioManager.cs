@@ -1,76 +1,37 @@
-using UnityEngine.Audio;
-using System;
 using UnityEngine;
+using System;
+using System.Collections.Generic;
 
-//Credit to Brackeys youtube tutorial on Audio managers, as the majority of this code and learning how to use it was made by him.
-[System.Serializable]
+[Serializable]
 public class Sound
 {
-    public string name;
-    public AudioClip clip;
-    [Range(0,1)]
-    public float volume = 1;
-    [Range(-3,3)]
-    public float pitch = 1;
-    public bool loop = false;
-    public AudioSource source;
-
-    public Sound()
-    {
-        volume = 1;
-        pitch = 1;
-        loop = false;
-    }
+	public string Name;
+	public AudioClip Clip;
+	[Range(0, 1)] public float Volume = 1;
+	[Range(-3, 3)] public float Pitch = 1;
+	public bool Loop = false;
+	public AudioSource Source;
 }
 
-public class AudioManager : MonoBehaviour
+public interface IAudioPlayer
 {
-    public Sound[] sounds;
+	void Play(string name);
+	void Stop(string name);
+}
 
-    public static AudioManager instance;
-    //AudioManager
+public class AudioManager : MonoBehaviourSingletonPersistent<AudioManager>, IAudioPlayer
+{
+	[SerializeField] private List<Sound> sounds;
 
-    void Awake()
-    {
-        if (instance == null)
-            instance = this;
-        else
-        {
-            Destroy(gameObject);
-            return;
-        }
+	private IAudioPlayer _audioPlayer;
 
-        DontDestroyOnLoad(gameObject);
+	public override void Awake()
+	{
+		base.Awake();
+		_audioPlayer = new AudioPlayer(sounds, gameObject);
+	}
 
-        foreach (Sound s in sounds)
-        {
-            if(!s.source)
-                s.source = gameObject.AddComponent<AudioSource>();
+	public void Play(string name) => _audioPlayer.Play(name);
 
-            s.source.clip = s.clip;
-
-            s.source.volume = s.volume;
-            s.source.pitch = s.pitch;
-            s.source.loop = s.loop;
-        }
-    }
-
-    public void Play(string name)
-    {
-        Sound s = Array.Find(sounds, sound => sound.name == name);
-        if (s == null)
-        {
-            Debug.LogWarning("Sound: " + name + " not found");
-            return;
-        }
-
-        s.source.Play();
-    }
-
-    public void Stop(string name)
-    {
-        Sound s = Array.Find(sounds, sound => sound.name == name);
-
-        s.source.Stop();
-    }
+	public void Stop(string name) => _audioPlayer.Stop(name);
 }
